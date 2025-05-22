@@ -1,44 +1,3 @@
-# import os
-# import subprocess
-# import requests
-# import google.generativeai as genai
-#
-# # Configure Gemini API key
-# genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
-#
-# # Get diff from this branch vs main
-# diff = subprocess.getoutput("git diff origin/main...HEAD")
-#
-# # Ask Gemini to summarize the changes
-# model = genai.GenerativeModel("gemini-2.0-flash")
-# response = model.generate_content(f"Summarize this code diff:\n\n{diff}")
-# summary = response.text.strip()
-#
-# # Get branch name and repo
-# branch = subprocess.getoutput("git rev-parse --abbrev-ref HEAD")
-# repo = os.getenv("GITHUB_REPOSITORY")
-# token = os.getenv("GITHUB_TOKEN")
-#
-# # Create pull request payload
-# payload = {
-#     "title": f"[AI] Summary for {branch}",
-#     "head": branch,
-#     "base": "main",
-#     "body": summary,
-# }
-#
-# # Make the GitHub API call
-# res = requests.post(
-#     f"https://api.github.com/repos/{repo}/pulls",
-#     headers={"Authorization": f"token {token}"},
-#     json=payload,
-# )
-#
-# if res.status_code == 201:
-#     print("✅ Pull request created successfully!")
-# else:
-#     print("❌ Error creating PR:", res.status_code, res.text)
-
 import os
 import subprocess
 from github import Github
@@ -48,48 +7,57 @@ import google.generativeai as genai
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-2.0-flash")
 
-# Get changed files from git diff
-files_changed = subprocess.check_output(["git", "diff", "--name-only", "origin/main...HEAD"]).decode("utf-8").strip().split("\n")
+# Get changed files
+files_changed = subprocess.check_output(
+    ["git", "diff", "--name-only", "origin/main...HEAD"]
+).decode("utf-8").strip().split("\n")
 
-# Read the content of each changed file
-code_blocks = []
+# Read and summarize each file
+summaries = []
+
 for file in files_changed:
-    if file.endswith(".py"):  # Or .js, .ts, .java, etc
-        try:
-            with open(file, "r") as f:
-                content = f.read()
-                code_blocks.append(f"### File: {file}\n{content}")
-        except FileNotFoundError:
-            continue
+    if not os.path.isfile(file):
+        continue  # Skip deleted or non-existent files
 
-# Join and send to Gemini
-combined_code = "\n\n".join(code_blocks)
-prompt = f"""
-You are a code reviewer. Analyze the following files.
+    with open(file, "r", encoding="utf-8", errors="ignore") as f:
+        content = f.read()
 
-1. Explain what the code is doing.
-2. Detect if there are any obvious bugs, bad practices, or improvements.
-3. Generate a pull request description.
+    prompt = f"""
+You are a code reviewer. Summarize the contents of the file below in 1–2 short sentences.
 
-Code:
-{combined_code}
+Respond in this format:
+File: {file}
+Summary: <your summary>
+
+File content:
+{content}
 """
 
-response = model.generate_content(prompt)
-summary = response.text
+    try:
+        response = model.generate_content(prompt)
+        summaries.append(response.text.strip())
+    except Exception as e:
+        summaries.append(f"File: {file}\nSummary: Failed to generate summary: {e}")
 
-print("Generated Review:\n", summary)
+# Join all summaries
+summary = "\n\n".join(summaries)
 
-# Create Pull Request
+# Authenticate with GitHub
 g = Github(os.environ["GITHUB_TOKEN"])
 repo = g.get_repo(os.environ["GITHUB_REPOSITORY"])
 head_branch = os.environ["GITHUB_REF"].split("/")[-1]
 
-pr = repo.create_pull(
-    title="AI-reviewed PR: " + head_branch,
-    body=summary,
-    head=head_branch,
-    base="main"
-)
-
-print(f"✅ Pull Request created: {pr.html_url}")
+# Check if PR already exists
+prs = repo.get_pulls(state='open', head=f"{repo.owner.login}:{head_branch}")
+if prs.totalCount > 0:
+    pr = prs[0]
+    pr.edit(body=summary)
+    print(f"✅ Updated existing PR: {pr.html_url}")
+else:
+    pr = repo.create_pull(
+        title=f"AI-reviewed PR: {head_branch}",
+        body=summary,
+        head=head_branch,
+        base="main"
+    )
+    print(f"✅ Created new PR: {pr.html_url}")
