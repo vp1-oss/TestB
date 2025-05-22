@@ -4,8 +4,8 @@ on:
   push:
     branches-ignore:
       - main
-    branches:
-      - '**'  # Run on all branches
+#    branches:
+#      - '**'  # Run on all branches
 
 jobs:
   generate-pr:
