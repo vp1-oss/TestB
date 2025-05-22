@@ -2,6 +2,8 @@ name: AI Pull Request with Gemini
 
 on:
   push:
+    branches-ignore:
+      - main
     branches:
       - '**'  # Run on all branches
 
