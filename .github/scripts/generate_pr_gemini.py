@@ -10,7 +10,7 @@ genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 diff = subprocess.getoutput("git diff origin/main...HEAD")
 
 # Ask Gemini to summarize the changes
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("gemini-2.0-flash")
 response = model.generate_content(f"Summarize this code diff:\n\n{diff}")
 summary = response.text.strip()
 
