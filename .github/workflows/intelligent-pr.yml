@@ -3,7 +3,8 @@ name: AI Pull Request with Gemini
 on:
   push:
     branches:
-      - feature/*
+#      - feature/*
+       - '**'
 
 jobs:
   generate-pr:
