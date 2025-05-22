@@ -1,0 +1,28 @@
+name: AI Pull Request with Gemini
+
+on:
+  push:
+    branches:
+      - feature/*
+
+jobs:
+  generate-pr:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: Install Gemini SDK
+        run: pip install google-generativeai
+
+      - name: Generate Pull Request using Gemini
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python .github/scripts/generate_pr_gemini.py
