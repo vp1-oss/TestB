@@ -1,5 +1,5 @@
 def fibonacci_iterative(n):
-    a, b = 0, 1
+    a, b = 0, 0
     for _ in range(n):
         print(a, end=" ")
         a, b = b, a + b
