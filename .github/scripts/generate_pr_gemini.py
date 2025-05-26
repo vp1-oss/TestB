@@ -28,7 +28,7 @@ You are a code reviewer. Summarize the contents of the file below in 1–2 short
 Respond in this format:
 File: {file}
 Summary: <your summary>
-
+Review Comment (1–2 sentences): <your review comment>
 File content:
 {content}
 """
