@@ -150,7 +150,7 @@ for file in files_changed:
     review_notes = "\n".join(review_points)
 
     prompt = f"""
-You are a senior software engineer. Summarize the file and suggest improvements.
+You are a senior software engineer. Summarize the file and suggest improvements. in one line for each point.
 
 Respond in this format:
 File: {file}
