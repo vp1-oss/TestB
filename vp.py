@@ -4,7 +4,7 @@ def fibonacci_recursive(n):
     elif n == 1:
         return 1
     else:
-        return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 2)
+        return fibonacci_recursive(n - 1) + fibonacci_recursive(n - 3)
 
 # Generate the first 100 Fibonacci numbers using recursion
 fibonacci_numbers = [fibonacci_recursive(i) for i in range(100)]
